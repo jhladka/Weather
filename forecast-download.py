@@ -39,7 +39,7 @@ class Forecast:
 class ForecastFromYR(Forecast):
 
     """
-    Reads and saves the weather forecast from yr.no into file.
+    Reads and saves the weather forecast from yr.no.
     """
 
     def __init__(self, city):
@@ -129,7 +129,6 @@ class ForecastFromYR(Forecast):
             wind.append(wind_long[i])
             clouds.append(clouds_long[i])
             Weather.append(weather_long[i])
-        #print(len(Date), len(temp), len(rain), len(wind), len(clouds), len(Weather))
         # save it:
         for i in range(len(Date)):
             weather = {}
@@ -145,7 +144,7 @@ class ForecastFromYR(Forecast):
 class ForecastFromInPocasi(Forecast):
 
     """
-    Reads and saves the weather forecast from in-pocasi into file.
+    Reads and saves the weather forecast from in-pocasi.
     """
 
     def __init__(self, city):
@@ -223,7 +222,7 @@ class ForecastFromInPocasi(Forecast):
 class ForecastFromOWM(Forecast):
 
     """
-    Reads and saves the weather forecast from openweathermap into file.
+    Reads and saves the weather forecast from openweathermap.
     """
 
     def __init__(self, ID):
