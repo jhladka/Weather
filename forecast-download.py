@@ -10,7 +10,8 @@ from datetime import datetime, date, time, timedelta
 
 city = 'Brno'
 ID = '3078610'    # Brno for OWM
-web_id = {'openweathermap': 'owm', 'in-pocasi': 'inp'}
+yr_path = {'Brno': 'Czech_Republic/South_Moravia/Brno'}
+web_id = {'openweathermap': 'owm', 'in-pocasi': 'inp', 'yr': 'yr'}
 
 
 class Forecast:
@@ -18,7 +19,7 @@ class Forecast:
     """
     Saves the weather forecast.
     """
-    
+
     def __init__(self, site, download_date, ID):
         self.weather = {}
         self.weather['site'] = site
@@ -33,6 +34,112 @@ class Forecast:
         inputFile = './data/' + site + '-' + ID + '-' + date
         with open(inputFile, 'wb') as f:
             pickle.dump(self.weather, f)
+
+
+class ForecastFromYR(Forecast):
+
+    """
+    Reads and saves the weather forecast from yr.no into file.
+    """
+
+    def __init__(self, city):
+        super().__init__('yr', datetime.now(), city)
+        self.goto()
+
+    def goto(self):
+        """
+        Reads weather forecast from yr:
+        """
+        html = 'http://www.yr.no/place/' + yr_path[city] + '/hour_by_hour_detailed.html'
+        doc = parse(html).getroot()
+        html_long = 'http://www.yr.no/place/' + yr_path[city] + '/long.html'
+        doc_long = parse(html_long).getroot()
+        self.parse_response(doc, doc_long)
+
+    def parse_response(self, doc, doc_long):
+        temp, rain, wind, clouds, weather, Date = [], [], [], [], [], []
+        day = doc.xpath("//table[contains(@class, 'yr-table')]/caption")[0].text_content()
+        date_regex = re.compile('[A-S][a-z]{2,8} \d{1,2}, [1-9]\d{3}')
+        day = date_regex.search(day).group()
+        Time = doc.xpath("//table[contains(@class, 'yr-table')]/tbody/tr/th/strong/text()")
+        d = 0
+        for t in Time:
+            try:
+                if t < last_time:
+                    d += 1
+            except NameError:
+                pass
+            Date.append(datetime.strptime(day + t, '%B %d, %Y%H:%M') + timedelta(days=d))
+            #Date.append(str(datetime.strftime(Datetime, '%Y-%m-%d %H:%M:00')))
+            last_time = t
+        temp = doc.xpath("//table/tbody/tr/td[contains(@class, 'temperature')]/text()")
+        temp = [x[:-1] for x in temp]
+        rain = doc.xpath("//table/tbody/tr/td[contains(@title, 'Precipitation:')]/span/text()")
+        rain = [x[:-1] for x in rain]
+        wind = doc.xpath("//table/tbody/tr/td[contains(@class, 'txt-left')]")
+        Wind = [x.text_content() for x in wind]
+        wind_regex = re.compile('\d+ m/s')
+        wind = []
+        for w in Wind:
+            exp = wind_regex.search(w)
+            if exp != None:
+                wind.append([exp.group()[:-4], None])
+        clouds = doc.xpath("//table/tbody/tr/td[contains(@title, 'Total cloud-cover:')]/text()")
+        clouds = [x[:-2] for x in clouds]
+        Weather = doc.xpath("//table[@id='detaljert-tabell']/tbody/tr/td/img[@width='38']/@alt")
+
+        # Long term forecast:
+        day_long = doc_long.xpath("//th[@scope='rowgroup']")[0].text_content()[-10:]
+        day_long = datetime.strptime(day_long, '%d/%m/%Y')
+        temp_long = doc_long.xpath("//table[contains(@id, 'detaljert')]/tr/td[contains(@class, 'temperature')]/text()")
+        temp_long = [x[:-1] for x in temp_long]
+        rain_long = doc_long.xpath("//table[contains(@id, 'detaljert')]/tr/td[contains(@title, 'Precipitation')]/text()")
+        rain_long = [x[:-3] for x in rain_long]
+        Wind = doc_long.xpath("//table[contains(@id, 'detaljert')]/tr/td[@class='txt-left']")
+        Wind_long = [x.text_content() for x in Wind]
+        wind_long = []
+        for w in Wind_long:
+            exp = wind_regex.search(w)
+            if exp != None:
+                wind_long.append([exp.group()[:-4], None])
+        clouds_long = [None for x in temp_long]
+        Weather_long = doc_long.xpath("//table[contains(@id, 'detaljert')]/tr/td/img[@width='38']/@alt")
+        weather_long = [x.split('.')[0] for x in Weather_long]
+        Time = [x.split()[-1] for x in Weather_long]
+        Date_long = []
+        for t in Time:
+            x = int(t[-11:-9])
+            y = int(t[-5:-3])
+            if x < y:
+                T = int(x + (y - x)/2)
+                Date_long.append(datetime.combine(day_long, time(T, 0)))
+            else:
+                T = int(x + (y - x + 24)/2)
+                Date_long.append(datetime.combine(day_long, time(T, 0)))
+                day_long += timedelta(days=1)
+
+        # add longterm forecast to list:
+        last_date = Date[-1]
+        for i in range(len(Date_long)):
+            if Date_long[i] <= last_date:
+                continue
+            Date.append(Date_long[i])
+            temp.append(temp_long[i])
+            rain.append(rain_long[i])
+            wind.append(wind_long[i])
+            clouds.append(clouds_long[i])
+            Weather.append(weather_long[i])
+        #print(len(Date), len(temp), len(rain), len(wind), len(clouds), len(Weather))
+        # save it:
+        for i in range(len(Date)):
+            weather = {}
+            weather['temp'] = temp[i]
+            weather['rain'] = rain[i]
+            weather['wind'] = wind[i]
+            weather['clouds'] = clouds[i]
+            weather['weather'] = Weather[i]
+            self.weather['forecast'][str(Date[i])] = weather
+        self.saveToFile()
 
 
 class ForecastFromInPocasi(Forecast):
@@ -104,17 +211,12 @@ class ForecastFromInPocasi(Forecast):
         for div in vyhled_wind:
             rain.append(None)   # no data available
             wind.append([div.text_content(), None])
-        forecast = {'date': Date,
-                'temp': temp,
-                'rain': rain,
-                'wind': wind}
-        for i in range(len(forecast['date'])):
-            d = str(forecast['date'][i])
+        for i in range(len(Date)):
             weather = {}
-            weather['temp'] = forecast['temp'][i]
-            weather['rain'] = forecast['rain'][i]
-            weather['wind'] = forecast['wind'][i]
-            self.weather['forecast'][d] = weather
+            weather['temp'] = temp[i]
+            weather['rain'] = rain[i]
+            weather['wind'] = wind[i]
+            self.weather['forecast'][str(Date[i])] = weather
         self.saveToFile()
 
 
@@ -155,6 +257,6 @@ class ForecastFromOWM(Forecast):
             self.weather['forecast'][d] = weather
         self.saveToFile()
 
-
-#ForecastFromOWM(ID)
+ForecastFromYR(city)
+ForecastFromOWM(ID)
 ForecastFromInPocasi(city)
