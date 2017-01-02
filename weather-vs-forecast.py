@@ -1,14 +1,30 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
+
+"""
+
+Compare forecast accuracy as a function of number of days prior to the forecast date.
+
+Y-axis shows the difference between weather and forecast values.
+So, values above zero axis mean that the weather values were higher than
+predicted and conversely values below 0 indicate the forecast overestimated
+the weather.
+
+"""
+
+
 import glob
 import re
 import pickle
 from datetime import datetime, timedelta
 
+import plotly
+from plotly.graph_objs import *
 
-legend = {'temp': 'Temperature [°C]',
-          'wind_speed': 'Wind speed [km/h]'}
+
+legend = {'temp': "Δ Temperature [°C]",
+          'wind_speed': 'Δ Wind speed [km/h]'}
 blue = 'rgb(22, 96, 167)'
 red = 'rgb(205, 12, 24)'
 green = 'rgb(20, 200, 20)'
@@ -86,8 +102,8 @@ class GraphWeatherVsForecast:
         Show graph.
         """
         from math import sqrt
-        import plotly
-        from plotly.graph_objs import Scatter, Box, Layout, Figure
+        #import plotly
+        #from plotly.graph_objs import Scatter, Box, Layout, Figure
 
         fig = plotly.tools.make_subplots(rows=2, cols=1)
         color_site = {'op': blue, 'in': red, 'yr': green}
@@ -114,9 +130,9 @@ class GraphWeatherVsForecast:
                     fig.append_trace(Box(x=x_scatter, y=y_scatter,
                         showlegend=False,
                         line=dict(color=color)), 2, 1)
-        fig['layout'].update(title='Weather vs. Forecast comparison')
-        fig['layout']['xaxis1'].update(title='days')
-        fig['layout']['xaxis2'].update(title='days')
+        fig['layout'].update(title='Weather vs. Forecast comparison - ' + city)
+        fig['layout']['xaxis1'].update(title='days ahead')
+        fig['layout']['xaxis2'].update(title='days ahead')
         fig['layout']['yaxis1'].update(title=legend['temp'])
         fig['layout']['yaxis2'].update(title=legend['wind_speed'])
         now_str = datetime.strftime(datetime.now(),'%Y%m%d%H%M')

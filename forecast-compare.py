@@ -1,6 +1,13 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
+"""
+
+Compare different forecasts (temperature, precipitation and wind speed) for Brno.
+
+"""
+
+
 import glob
 import re
 from datetime import datetime, date, timedelta
@@ -26,6 +33,7 @@ class Forecast:
         self.id = Json['id']
         self.weather = {}
         self.weather['forecast'] = {}
+        now = datetime.now()
         for d, w in Json['forecast'].items():
             weather = {}
             weather['temp'] = w.get('temp', None)
@@ -34,7 +42,8 @@ class Forecast:
             weather['wind'] = w.get('wind', [None, None])
             weather['rain'] = w.get('rain', None)
             weather['snow'] = w.get('snow', 0)
-            self.weather['forecast'][d] = weather
+            if datetime.strptime(d, '%Y-%m-%d %H:%M:00') > now:
+                self.weather['forecast'][d] = weather
 
 
 class GraphCompareForecast:
@@ -117,7 +126,7 @@ class GraphCompareForecast:
                         y=self.data[q][site][1],
                         mode='lines+markers', showlegend=False,
                         line=dict(color=color_site[site[:2]])), i+1, 1)
-        fig['layout'].update(title='Forecast comparison')
+        fig['layout'].update(title='Forecast comparison - ' + city)
         fig['layout']['xaxis1'].update(range=[self.xmin, self.xmax])
         fig['layout']['xaxis2'].update(range=[self.xmin, self.xmax])
         fig['layout']['xaxis3'].update(range=[self.xmin, self.xmax])
@@ -127,6 +136,6 @@ class GraphCompareForecast:
         filename = './graphs/forecast-comparison-' + self.now_str + '.html'
         plotly.offline.plot(fig, filename=filename)
 
-
+city = 'Brno'
 quantity = ['temp', 'rain', 'wind_speed']
 GraphCompareForecast(quantity)

@@ -1,6 +1,13 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
+"""
+
+Parse forecast for Brno from different sites and save it in json file.
+
+"""
+
+
 from grab import Grab
 import json
 import re

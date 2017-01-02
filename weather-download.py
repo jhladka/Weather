@@ -1,6 +1,15 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
+"""
+
+Parse weather history for Brno (weather, temperature and wind speed) from
+http://pocasi.divoch.cz/
+and save it in json file.
+
+"""
+
+
 import re
 import pickle
 from glob import glob
@@ -8,7 +17,7 @@ from lxml.html import parse
 from datetime import datetime, timedelta
 
 
-class Forecast:
+class Weather:
 
     """
     Saves the weather.
@@ -62,7 +71,6 @@ class Forecast:
             weather['wind'] = wind[i]
             weather['weather'] = Weather[i]
             self.weather['weather'][str(date[i])] = weather
-        #print(self.weather)
         self.saveToFile()
 
     def saveToFile(self):
@@ -86,5 +94,5 @@ else:
 while Date < Today:
     date = datetime.strftime(Date, '%Y-%m-%d')
     date_no_spaces = datetime.strftime(Date, '%Y%m%d')
-    Forecast(city, date, date_no_spaces)
+    Weather(city, date, date_no_spaces)
     Date += timedelta(days=1)
