@@ -19,9 +19,6 @@ import re
 import pickle
 from datetime import datetime, timedelta
 
-import plotly
-from plotly.graph_objs import *
-
 
 legend = {'temp': "Δ Temperature [°C]",
           'wind_speed': 'Δ Wind speed [km/h]'}
@@ -102,8 +99,9 @@ class GraphWeatherVsForecast:
         Show graph.
         """
         from math import sqrt
-        #import plotly
-        #from plotly.graph_objs import Scatter, Box, Layout, Figure
+        import plotly
+        from plotly.graph_objs import Scatter, Box, Layout, Figure
+        import requests
 
         fig = plotly.tools.make_subplots(rows=2, cols=1)
         color_site = {'op': blue, 'in': red, 'yr': green}
@@ -124,20 +122,26 @@ class GraphWeatherVsForecast:
                         y_stdDev.append(sqrt(stdDev/(N - 1)))
                 color = color_site[site[:2]]
                 if q == 'temp':
-                    fig.append_trace(Box(x=x_scatter, y=y_scatter, name=site,
-                        line=dict(color=color_site[site[:2]])), 1, 1)
+                    qq = 'temperature'
+                    subplot = 1
                 else:
-                    fig.append_trace(Box(x=x_scatter, y=y_scatter,
-                        showlegend=False,
-                        line=dict(color=color)), 2, 1)
+                    qq = q
+                    subplot = 2
+                fig.append_trace(
+                    Box(x=x_scatter, y=y_scatter, name=site + ': ' + qq,
+                        line=dict(color=color_site[site[:2]])), subplot, 1)
         fig['layout'].update(title='Weather vs. Forecast comparison - ' + city)
         fig['layout']['xaxis1'].update(title='days ahead')
         fig['layout']['xaxis2'].update(title='days ahead')
         fig['layout']['yaxis1'].update(title=legend['temp'])
         fig['layout']['yaxis2'].update(title=legend['wind_speed'])
         now_str = datetime.strftime(datetime.now(),'%Y%m%d%H%M')
-        filename = './graphs/weather-vs-forecast-' + city + '-' + now_str + '.html'
-        plotly.offline.plot(fig, filename=filename)
+        try:
+            filename = 'Weather_vs_forecast'
+            plotly.plotly.plot(fig, filename=filename)
+        except requests.exceptions.ConnectionError:
+            filename = './graphs/weather-vs-forecast-' + city + '-' + now_str + '.html'
+            plotly.offline.plot(fig, filename=filename)
 
 
 

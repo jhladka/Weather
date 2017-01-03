@@ -105,36 +105,41 @@ class GraphCompareForecast:
         """
         import plotly
         from plotly.graph_objs import Scatter, Layout, Figure
+        import requests
 
         fig = plotly.tools.make_subplots(rows=3, cols=1)
         color_site = {'op': blue, 'in': red, 'yr': green}
         for i in range(len(self.quantity)):
             q = self.quantity[i]
+            if q == 'temp':
+                qq = 'temperature'
+            elif q == 'rain':
+                qq = 'precipitation'
+            else:
+                qq = q
             for site in self.data[q]:
                 # convert m/s to km/h:
                 if q == 'wind_speed':
                     if site[:14] == 'openweathermap' or site[:2] == 'yr':
                         for j in range(len(self.data[q][site][1])):
                             self.data[q][site][1][j] = 3.6 * int(self.data[q][site][1][j])
-                if i == 0:
-                    fig.append_trace(Scatter(x=self.data[q][site][0],
-                        y=self.data[q][site][1],
-                        mode='lines+markers', name=site,
-                        line=dict(color=color_site[site[:2]])), i+1, 1)
-                else:
-                    fig.append_trace(Scatter(x=self.data[q][site][0],
-                        y=self.data[q][site][1],
-                        mode='lines+markers', showlegend=False,
-                        line=dict(color=color_site[site[:2]])), i+1, 1)
-        fig['layout'].update(title='Forecast comparison - ' + city)
+                fig.append_trace(Scatter(x=self.data[q][site][0],
+                    y=self.data[q][site][1],
+                    mode='lines+markers', name=site[:-10] + ': ' + qq,
+                    line=dict(color=color_site[site[:2]])), i+1, 1)
+        fig['layout'].update(title='Forecast comparison - ' + city + ' - ' + site[-10:])
         fig['layout']['xaxis1'].update(range=[self.xmin, self.xmax])
         fig['layout']['xaxis2'].update(range=[self.xmin, self.xmax])
         fig['layout']['xaxis3'].update(range=[self.xmin, self.xmax])
         fig['layout']['yaxis1'].update(title=legend['temp'])
         fig['layout']['yaxis2'].update(title=legend['rain'])
         fig['layout']['yaxis3'].update(title=legend['wind_speed'])
-        filename = './graphs/forecast-comparison-' + self.now_str + '.html'
-        plotly.offline.plot(fig, filename=filename)
+        try:
+            filename = 'Forecast_comparison'
+            plotly.plotly.plot(fig, filename=filename)
+        except requests.exceptions.ConnectionError:
+            filename = './graphs/forecast-comparison-' + self.now_str + '.html'
+            plotly.offline.plot(fig, filename=filename)
 
 city = 'Brno'
 quantity = ['temp', 'rain', 'wind_speed']
