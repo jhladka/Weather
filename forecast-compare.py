@@ -10,6 +10,7 @@ Compare different forecasts (temperature, precipitation and wind speed) for Brno
 
 import glob
 import re
+import os
 from datetime import datetime, date, timedelta
 
 
@@ -141,6 +142,7 @@ class GraphCompareForecast:
             filename = './graphs/forecast-comparison-' + self.now_str + '.html'
             plotly.offline.plot(fig, filename=filename)
 
+os.chdir('/home/jirka/JARKA/GIT/Weather/')
 city = 'Brno'
 quantity = ['temp', 'rain', 'wind_speed']
 GraphCompareForecast(quantity)

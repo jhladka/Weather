@@ -11,6 +11,7 @@ Parse forecast for Brno from different sites and save it in json file.
 from grab import Grab
 import json
 import re
+import os
 import pickle
 from lxml.html import parse
 from datetime import datetime, date, time, timedelta
@@ -263,6 +264,8 @@ class ForecastFromOWM(Forecast):
             self.weather['forecast'][d] = weather
         self.saveToFile()
 
+
+os.chdir('/home/jirka/JARKA/GIT/Weather/')
 ForecastFromYR(city)
 ForecastFromOWM(ID)
 ForecastFromInPocasi(city)

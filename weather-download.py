@@ -9,7 +9,7 @@ and save it in json file.
 
 """
 
-
+import os
 import re
 import pickle
 from glob import glob
@@ -78,7 +78,7 @@ class Weather:
         with open(File, 'wb') as f:
             pickle.dump(self.weather, f)
 
-
+os.chdir('/home/jirka/JARKA/GIT/Weather/')
 city = 'Brno'
 Today = datetime.today().date()
 files = './weather/weather-*.json'
@@ -86,8 +86,8 @@ dates = []
 for f in glob(files):
     dates.append(datetime.strptime(f[-13:-5], '%Y%m%d').date())
 if len(dates) == 0:
-    Date = input('Download weather from (YYYY-MM-DD) : ')
-    Date = datetime.strptime(Date, '%Y-%m-%d').date()
+    #Date = input('Download weather from (YYYY-MM-DD) : ')
+    Date = Today - timedelta(days=7)
 else:
     Date = sorted(dates)[-1]
     Date += timedelta(days=1)

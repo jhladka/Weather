@@ -15,6 +15,7 @@ the weather.
 
 
 import glob
+import os
 import re
 import pickle
 from datetime import datetime, timedelta
@@ -156,6 +157,7 @@ def roundTimeDelta(delta):
     return timedelta(days=delta.days, seconds=d)
 
 
+os.chdir('/home/jirka/JARKA/GIT/Weather/')
 city = 'Brno'
 site = {'in-pocasi': ['inp', 'Brno'],
         'yr': ['yr', 'Brno'],
